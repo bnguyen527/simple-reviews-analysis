@@ -1,3 +1,3 @@
-all_sentiment_shuffled.txt
-hw6_notebook.ipynb
-.ipynb_checkpoints/hw6_notebook-checkpoint.ipynb
+*.txt
+*.ipynb
+.ipynb_checkpoints/
