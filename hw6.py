@@ -72,6 +72,16 @@ def evaluate_nb(classifier_data, testing_data):
     return (df_test['labels'] == predictions).sum() / len(predictions)
 
 
+def print_top_nb(classifier_data, n_highest):
+    _, df_probs, _ = classifier_data
+    top_neg = df_probs.sort_values('neg')[:n_highest].index.values.tolist()
+    top_pos = df_probs.sort_values('pos')[:n_highest].index.values.tolist()
+    df_top = pd.DataFrame(columns=['neg', 'pos'])
+    df_top['neg'] = top_neg
+    df_top['pos'] = top_pos
+    print(df_top)
+
+
 def main():
     labeled_corpus = read_corpus('all_sentiment_shuffled.txt')
     split = round(len(labeled_corpus) * 0.8)
