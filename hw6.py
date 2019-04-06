@@ -36,16 +36,32 @@ def train_nb(training_data, alpha):
                 counts_neg[idx] += 1
             else:
                 counts_pos[idx] += 1
-    probs_neg = list(map(lambda c: laplace_smoothing(c, num_tokens_neg, vocab, alpha), counts_neg))
-    probs_pos = list(map(lambda c: laplace_smoothing(c, num_tokens_pos, vocab, alpha), counts_pos))
+    vocab_size = len(vocab)
+    probs_neg = list(map(lambda c: laplace_smoothing(c, num_tokens_neg, vocab_size, alpha), counts_neg))
+    probs_pos = list(map(lambda c: laplace_smoothing(c, num_tokens_pos, vocab_size, alpha), counts_pos))
+    probs_unknowns = (laplace_smoothing(0, num_tokens_neg, vocab_size+1, alpha), laplace_smoothing(0, num_tokens_pos, vocab_size+1, alpha))
     df_probs = pd.DataFrame(index=vocab)
     df_probs['neg'] = probs_neg
     df_probs['pos'] = probs_pos
-    return (num_neg / len(training_data), df_probs)
+    return (num_neg / len(training_data), df_probs, probs_unknowns)
 
 
-def laplace_smoothing(count, num_tokens, vocab, alpha):
-    return (count+alpha) / (num_tokens+len(vocab)*alpha)
+def laplace_smoothing(count, num_tokens, vocab_size, alpha):
+    return (count+alpha) / (num_tokens+vocab_size*alpha)
+
+
+def classify_nb(classifier_data, document):
+    probs_sentiment, df_probs, probs_unknowns = classifier_data
+    vocab = df_probs.index.values.tolist()
+    prob_neg, prob_pos = probs_sentiment
+    for token in document:
+        if token in vocab:
+            probs = df_probs.loc[token, :].tolist()
+        else:
+            probs = probs_unknowns
+        prob_neg *= probs[0]
+        prob_pos *= probs[1]
+    return 'neg' if prob_neg > prob_pos else 'pos'
 
 
 def main():
@@ -53,7 +69,10 @@ def main():
     split = round(len(labeled_corpus) * 0.8)
     training_data = labeled_corpus[:split]
     testing_data = labeled_corpus[split:]
-    prob_neg, df_probs = train_nb(training_data, 1)
+    prob_neg, df_probs, probs_unknowns = train_nb(training_data, 1)
+    probs_sentiment = (prob_neg, 1-prob_neg)
+    classifier_data = (probs_sentiment, df_probs, probs_unknowns)
+    print(classify_nb(classifier_data, testing_data[0]))
 
 
 if __name__ == "__main__":
