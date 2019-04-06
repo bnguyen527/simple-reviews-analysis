@@ -11,7 +11,7 @@ def read_corpus(corpus_file):
         return out
 
 
-def train_nb(training_data):
+def train_nb(training_data, alpha):
     num_neg = 0
     vocab = []
     counts_neg = []
@@ -36,12 +36,16 @@ def train_nb(training_data):
                 counts_neg[idx] += 1
             else:
                 counts_pos[idx] += 1
-    probs_neg = list(map(lambda c: c / num_tokens_neg, counts_neg))
-    probs_pos = list(map(lambda c: c / num_tokens_pos, counts_pos))
+    probs_neg = list(map(lambda c: laplace_smoothing(c, num_tokens_neg, vocab, alpha), counts_neg))
+    probs_pos = list(map(lambda c: laplace_smoothing(c, num_tokens_pos, vocab, alpha), counts_pos))
     df_probs = pd.DataFrame(index=vocab)
     df_probs['neg'] = probs_neg
     df_probs['pos'] = probs_pos
     return (num_neg / len(training_data), df_probs)
+
+
+def laplace_smoothing(count, num_tokens, vocab, alpha):
+    return (count+alpha) / (num_tokens+len(vocab)*alpha)
 
 
 def main():
@@ -49,7 +53,7 @@ def main():
     split = round(len(labeled_corpus) * 0.8)
     training_data = labeled_corpus[:split]
     testing_data = labeled_corpus[split:]
-    prob_neg, df_probs = train_nb(training_data)
+    prob_neg, df_probs = train_nb(training_data, 1)
 
 
 if __name__ == "__main__":
