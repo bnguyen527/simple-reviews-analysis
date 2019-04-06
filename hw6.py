@@ -4,6 +4,9 @@ import numpy as np
 import pandas as pd
 
 
+# Read the entire corpus from 'corpus_file'. Assume correct format and no
+# missing values.
+# Return a list of pairs of labels and texts.
 def read_corpus(corpus_file):
     out = []
     with open(corpus_file, encoding='utf8') as f:
@@ -13,6 +16,9 @@ def read_corpus(corpus_file):
         return out
 
 
+# Estimate the probabilities in the Naive Bayes model.
+# Return 3 objects: the probability of a review being negative, the log
+# probabilities of each words being in a negative...
 def train_nb(training_data, alpha):
     num_neg = 0
     vocab = []
@@ -90,7 +96,9 @@ def main():
     prob_neg, df_probs, probs_unknowns = train_nb(training_data, 1)
     probs_sentiment = (math.log(prob_neg), math.log(1-prob_neg))
     classifier_data = (probs_sentiment, df_probs, probs_unknowns)
-    print('Accuracy is: {}'.format(evaluate_nb(classifier_data, testing_data)))
+    print('Classication accuracy for the test set is: {}'.format(evaluate_nb(classifier_data, testing_data)))
+    print('Top 15 features that are most indicative of the positive and negative categories:\n')
+    print_top_nb(classifier_data, 15)
 
 
 if __name__ == '__main__':
