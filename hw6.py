@@ -64,6 +64,12 @@ def classify_nb(classifier_data, document):
     return 'neg' if prob_neg > prob_pos else 'pos'
 
 
+def evaluate_nb(classifier_data, testing_data):
+    df_test = pd.DataFrame(testing_data, columns=['labels', 'texts'])
+    predictions = df_test['texts'].apply(lambda doc: classify_nb(classifier_data, doc))
+    return (df_test['labels'] == predictions).sum() / len(predictions)
+
+
 def main():
     labeled_corpus = read_corpus('all_sentiment_shuffled.txt')
     split = round(len(labeled_corpus) * 0.8)
@@ -72,8 +78,8 @@ def main():
     prob_neg, df_probs, probs_unknowns = train_nb(training_data, 1)
     probs_sentiment = (prob_neg, 1-prob_neg)
     classifier_data = (probs_sentiment, df_probs, probs_unknowns)
-    print(classify_nb(classifier_data, testing_data[0]))
+    print('Accuracy is: {}'.format(evaluate_nb(classifier_data, testing_data)))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
