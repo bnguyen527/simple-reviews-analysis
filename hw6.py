@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 import pandas as pd
 
@@ -37,9 +39,9 @@ def train_nb(training_data, alpha):
             else:
                 counts_pos[idx] += 1
     vocab_size = len(vocab)
-    probs_neg = list(map(lambda c: laplace_smoothing(c, num_tokens_neg, vocab_size, alpha), counts_neg))
-    probs_pos = list(map(lambda c: laplace_smoothing(c, num_tokens_pos, vocab_size, alpha), counts_pos))
-    probs_unknowns = (laplace_smoothing(0, num_tokens_neg, vocab_size+1, alpha), laplace_smoothing(0, num_tokens_pos, vocab_size+1, alpha))
+    probs_neg = list(map(lambda c: math.log(laplace_smoothing(c, num_tokens_neg, vocab_size, alpha)), counts_neg))
+    probs_pos = list(map(lambda c: math.log(laplace_smoothing(c, num_tokens_pos, vocab_size, alpha)), counts_pos))
+    probs_unknowns = (math.log(laplace_smoothing(0, num_tokens_neg, vocab_size+1, alpha)), math.log(laplace_smoothing(0, num_tokens_pos, vocab_size+1, alpha)))
     df_probs = pd.DataFrame(index=vocab)
     df_probs['neg'] = probs_neg
     df_probs['pos'] = probs_pos
@@ -59,8 +61,8 @@ def classify_nb(classifier_data, document):
             probs = df_probs.loc[token, :].tolist()
         else:
             probs = probs_unknowns
-        prob_neg *= probs[0]
-        prob_pos *= probs[1]
+        prob_neg += probs[0]
+        prob_pos += probs[1]
     return 'neg' if prob_neg > prob_pos else 'pos'
 
 
@@ -76,7 +78,7 @@ def main():
     training_data = labeled_corpus[:split]
     testing_data = labeled_corpus[split:]
     prob_neg, df_probs, probs_unknowns = train_nb(training_data, 1)
-    probs_sentiment = (prob_neg, 1-prob_neg)
+    probs_sentiment = (math.log(prob_neg), math.log(1-prob_neg))
     classifier_data = (probs_sentiment, df_probs, probs_unknowns)
     print('Accuracy is: {}'.format(evaluate_nb(classifier_data, testing_data)))
 
